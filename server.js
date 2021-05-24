@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const port = 3000;
 const Web3 = require("web3");
-const truffle_connect = require("./connection/newApp.js");
+const truffle_connect = require("./connection/app.js");
 
 const OWNER = "0x7167145a3af0d906f8886389ac3c91a74078828f";
 
