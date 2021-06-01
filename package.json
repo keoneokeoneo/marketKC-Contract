@@ -3,7 +3,7 @@
   "version": "0.0.2",
   "description": "Make API-Endpoints for Ethereum BlockChain",
   "scripts": {
-    "start": "nodemon newServer.js",
+    "start": "nodemon server.js",
     "test": "truffle test test/*"
   },
   "author": "Arvind & Pranav",

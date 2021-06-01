@@ -3,6 +3,7 @@ pragma solidity >=0.4.25 <0.7.0;
 contract Smarcet {
     address payable platform;
 
+    // 하나의 거래 객체
     struct Trade {
         address payable seller;
         address payable buyer;
@@ -42,17 +43,13 @@ contract Smarcet {
         _;
     }
 
-    modifier isOpen(uint256 _id) {
-        require(Trades[_id].isOpen == true, "This trade is not open yet");
-        _;
-    }
-
     event CreateTrade(
         uint256 _id,
         address indexed _seller,
         address indexed _buyer,
         uint256 _price
     );
+
     event Transfer(
         uint256 _id,
         address indexed _from,
@@ -60,6 +57,7 @@ contract Smarcet {
         uint256 _price
     );
 
+    // 새로운 거래 생성 함수
     function createTrade(
         uint256 _id,
         address payable _seller,
@@ -70,6 +68,7 @@ contract Smarcet {
         emit CreateTrade(_id, _seller, _buyer, _price);
     }
 
+    // 구매자 -> 플랫폼 송금 함수 (거래 시작)
     function transferFromBuyerToPlatform(uint256 _id)
         public
         payable
@@ -84,6 +83,7 @@ contract Smarcet {
         emit Transfer(_id, msg.sender, platform, msg.value);
     }
 
+    // 플랫폼 -> 판매자 송금 함수 (거래 정상 종료)
     function transferFromPlatformToSeller(uint256 _id)
         public
         payable
@@ -99,6 +99,23 @@ contract Smarcet {
         emit Transfer(_id, msg.sender, Trades[_id].seller, msg.value);
     }
 
+    // 플랫폼 -> 구매자 송금 함수 (거래 불발)
+    function transferFromPlatformToBuyer(uint256 _id)
+        public
+        payable
+        onlyPlatform
+    {
+        require(
+            Trades[_id].isOpen == true && Trades[_id].stage == 2,
+            "It's not available"
+        );
+        Trades[_id].stage = 3;
+        Trades[_id].isOpen = false;
+        Trades[_id].buyer.transfer(msg.value);
+        emit Transfer(_id, msg.sender, Trades[_id].buyer, msg.value);
+    }
+
+    // 플랫폼 지갑 주소 조회
     function getOwner() public view onlyPlatform returns (address) {
         return platform;
     }

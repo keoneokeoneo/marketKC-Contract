@@ -4,7 +4,7 @@ const port = 3000;
 const Web3 = require("web3");
 const truffle_connect = require("./connection/app.js");
 
-const OWNER = "0x7167145a3af0d906f8886389ac3c91a74078828f";
+const OWNER = "0xB609aD78C486A4a37F66A9118E24D4D14B4e2402";
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -16,7 +16,6 @@ app.get("/getAccounts", (req, res) => {
 });
 
 app.get("/getBalance", (req, res) => {
-  console.log(req.query.addr, typeof req.query.addr);
   truffle_connect.getBalance(req.query.addr, (answer) => {
     res.send(answer);
   });
@@ -73,7 +72,6 @@ app.get("/getPrice", (req, res) => {
 });
 
 app.post("/createTrade", (req, res) => {
-  console.log(req.body);
   const { id, seller, buyer, price } = req.body;
 
   truffle_connect.createTrade(id, seller, buyer, OWNER, price, (id) => {
@@ -88,7 +86,6 @@ app.post("/transferToPlatform", (req, res) => {
   truffle_connect.transferToPlatform(
     Number(id),
     buyer,
-    OWNER,
     Number(price),
     (answer) => {
       res.send(answer);
@@ -97,10 +94,23 @@ app.post("/transferToPlatform", (req, res) => {
 });
 
 app.post("/transferToSeller", (req, res) => {
-  const { id, seller, price } = req.body;
+  const { id, price } = req.body;
+
   truffle_connect.transferToSeller(
     Number(id),
-    seller,
+    OWNER,
+    Number(price),
+    (answer) => {
+      res.send(answer);
+    }
+  );
+});
+
+app.post("/transferToBuyer", (req, res) => {
+  const { id, price } = req.body;
+
+  truffle_connect.transferToSeller(
+    Number(id),
     OWNER,
     Number(price),
     (answer) => {

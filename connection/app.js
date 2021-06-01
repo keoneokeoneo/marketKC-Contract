@@ -34,8 +34,12 @@ module.exports = {
 
     Smarcet.setProvider(self.web3.currentProvider);
 
-    self.web3.eth.getTransaction(addr, function (err, result) {
-      console.log(err, result, Number(result));
+    self.web3.eth.getBalance(addr, function (err, result) {
+      if (err) {
+        console.log(err, typeof err);
+        callback(err);
+        return;
+      }
       callback({ result: Number(result) });
     });
   },
@@ -82,7 +86,6 @@ module.exports = {
       });
   },
   getStage: function (id, owner, callback) {
-    console.log(id, owner);
     var self = this;
 
     Smarcet.setProvider(self.web3.currentProvider);
@@ -97,7 +100,6 @@ module.exports = {
         callback({ data: Number(data) });
       })
       .catch(function (e) {
-        console.log(e);
         callback("Error");
       });
   },
@@ -177,6 +179,7 @@ module.exports = {
         callback("Error");
       });
   },
+
   // 새로운 거래 열기
   createTrade: function (id, seller, buyer, owner, price, callback) {
     var self = this;
@@ -193,100 +196,83 @@ module.exports = {
         });
       })
       .then(function (data) {
-        console.log(data);
         callback(data);
       })
       .catch(function (e) {
-        console.log(e);
         callback("Error");
       });
   },
-  // 구매자 -> 플랫폼 송금
-  transferToPlatform: function (id, buyer, owner, price, callback) {
-    var self = this;
 
-    console.log(
-      `In app id[${id}] - From[${buyer}] To [${owner}] Value [${price}]`
-    );
+  // 구매자 -> 플랫폼 송금
+  transferToPlatform: function (id, buyer, price, callback) {
+    var self = this;
 
     Smarcet.setProvider(self.web3.currentProvider);
 
-    let transaction;
+    console.log(price);
 
-    self.web3.eth.sendTransaction(
-      { from: buyer, to: owner, value: price, gas: GAS_LIMIT },
-      function (sending, sent, transactionHash, receipt, confirmation, error) {
-        console.log("sent : ", sent);
-        console.log("error : ", error);
-        if (error) {
-          callback(error);
-          return;
-        }
-
-        transaction = sent;
-
-        var smarcet;
-        Smarcet.deployed()
-          .then(function (instance) {
-            smarcet = instance;
-            return smarcet.transferFromBuyerToPlatform(Number(id), {
-              from: buyer,
-              value: Number(price),
-              gas: GAS_LIMIT,
-            });
-          })
-          .then(function (data) {
-            callback({ data: data, sent: transaction });
-          })
-          .catch(function (e) {
-            console.log(e);
-            callback("Error");
-          });
-      }
-    );
+    var smarcet;
+    Smarcet.deployed()
+      .then(function (instance) {
+        smarcet = instance;
+        return smarcet.transferFromBuyerToPlatform(Number(id), {
+          from: buyer,
+          value: Number(price),
+          gas: GAS_LIMIT,
+        });
+      })
+      .then(function (data) {
+        callback({ data: data });
+      })
+      .catch(function (e) {
+        callback("Error");
+      });
   },
   // 플랫폼 -> 판매자 송금 (거래 종료)
-  transferToSeller: function (id, seller, owner, price, callback) {
+  transferToSeller: function (id, owner, price, callback) {
     var self = this;
-
-    console.log(
-      `In app id[${id}] - From[${seller}] To [${owner}] Value [${price}]`
-    );
 
     Smarcet.setProvider(self.web3.currentProvider);
 
-    let transaction;
+    var smarcet;
+    Smarcet.deployed()
+      .then(function (instance) {
+        smarcet = instance;
+        return smarcet.transferFromPlatformToSeller(Number(id), {
+          from: owner,
+          value: Number(price),
+          gas: GAS_LIMIT,
+        });
+      })
+      .then(function (data) {
+        callback({ data: data });
+      })
+      .catch(function (e) {
+        callback("Error");
+      });
+  },
 
-    self.web3.eth.sendTransaction(
-      { from: owner, to: seller, value: price, gas: GAS_LIMIT },
-      function (sending, sent, transactionHash, receipt, confirmation, error) {
-        console.log("sent : ", sent);
-        console.log("error : ", error);
-        if (error) {
-          callback(error);
-          return;
-        }
+  // 플랫폼 -> 구매자 송금 (거래 불발)
+  transferToBuyer: function (id, price, callback) {
+    var self = this;
 
-        transaction = sent;
+    Smarcet.setProvider(self.web3.currentProvider);
 
-        var smarcet;
-        Smarcet.deployed()
-          .then(function (instance) {
-            smarcet = instance;
-            return smarcet.transferFromPlatformToSeller(Number(id), {
-              from: owner,
-              value: Number(price),
-              gas: GAS_LIMIT,
-            });
-          })
-          .then(function (data) {
-            callback({ data: data, sent: transaction });
-          })
-          .catch(function (e) {
-            console.log(e);
-            callback("Error");
-          });
-      }
-    );
+    var smarcet;
+    Smarcet.deployed()
+      .then(function (instance) {
+        smarcet = instance;
+        return smarcet.transferFromPlatformToBuyer(Number(id), {
+          from: owner,
+          value: Number(price),
+          gas: GAS_LIMIT,
+        });
+      })
+      .then(function (data) {
+        callback({ data: data });
+      })
+      .catch(function (e) {
+        callback("Error");
+      });
   },
 };
